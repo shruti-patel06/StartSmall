@@ -1,8 +1,10 @@
 const STORAGE_KEYS = {
   USER_ID: 'startsmall_user_id',
+  EXPERIMENT_IDENTITY: 'startsmall_experiment_identity',
+  PRIMARY_CONVERSION_SENT: 'startsmall_primary_conversion_sent',
+  SECONDARY_CONVERSION_SENT: 'startsmall_secondary_conversion_sent',
   SESSION_STATE: 'startsmall_session_state',
   FEEDBACK_LOG: 'startsmall_feedback_log',
-  VARIANT_OVERRIDE: 'startsmall_phase1_variant',
 };
 
 function safeGetStorage(storageType = 'localStorage') {

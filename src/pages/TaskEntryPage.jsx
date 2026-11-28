@@ -58,7 +58,7 @@ export function TaskEntryPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="bg-white border-2 border-navy rounded-3xl p-6 sm:p-8 shadow-[0_6px_0_#2D3436]"
+        className="bg-white border-2 border-navy rounded-3xl p-5 xs:p-6 sm:p-8 shadow-[0_6px_0_#2D3436]"
       >
         <div className="mb-6">
           <span className="inline-block text-xs font-bold uppercase tracking-wider text-coral-500 bg-coral-50 border border-coral-200 rounded-full px-3 py-1 mb-3">

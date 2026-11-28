@@ -1,12 +1,15 @@
 import { createContext, useContext, useState, useCallback } from 'react';
+import { useFlagsmith } from '@flagsmith/flagsmith/react';
 import { useAnonymousIdentity } from '../hooks/useAnonymousIdentity';
-import {
-  getPhase1Variant,
-  setPhase1Variant,
-  trackPhase1Event,
-} from '../services/experimentService';
+import { isFlagsmithConfigured } from '../flagsmith/flagsmithClient';
+import { trackAnalyticsEvent } from '../services/analyticsService';
+import { appendSessionToMemory } from '../services/memoryService';
 import { getJSON, setJSON, STORAGE_KEYS } from '../services/storageService';
-import { FOCUS_DURATION_SECONDS } from '../constants/experimentEvents';
+import { MUSIC_VARIANTS } from '../flagsmith/flags';
+import {
+  EXPERIMENT_VARIANTS,
+  FOCUS_DURATION_SECONDS,
+} from '../constants/experimentEvents';
 
 const SessionContext = createContext(null);
 
@@ -14,6 +17,7 @@ const INITIAL_SESSION = {
   taskText: '',
   taskCategory: '',
   selectedMicroStep: '',
+  studyMusicType: MUSIC_VARIANTS.OFF,
   timeSpentSeconds: FOCUS_DURATION_SECONDS,
   feedbackResponse: '',
   feedbackNote: '',
@@ -21,13 +25,34 @@ const INITIAL_SESSION = {
 };
 
 export function SessionProvider({ children }) {
-  const { anonymousUserId, ensureIdentity } = useAnonymousIdentity();
-  const [experimentVariant, setExperimentVariant] = useState(() =>
-    getPhase1Variant()
+  const flagsmith = useFlagsmith();
+  const { anonymousUserId, ensureIdentity: ensureLocalIdentity } =
+    useAnonymousIdentity();
+
+  const [experimentVariant, setExperimentVariant] = useState(
+    EXPERIMENT_VARIANTS.CONTROL
   );
+  const [isEnrolledInExperiment, setIsEnrolledInExperiment] = useState(false);
+
   const [session, setSession] = useState(() => {
-    return getJSON(STORAGE_KEYS.SESSION_STATE, INITIAL_SESSION, 'sessionStorage');
+    return getJSON(
+      STORAGE_KEYS.SESSION_STATE,
+      INITIAL_SESSION,
+      'sessionStorage'
+    );
   });
+
+  const ensureIdentity = useCallback(() => {
+    const id = ensureLocalIdentity();
+    if (isFlagsmithConfigured() && flagsmith && flagsmith.identity !== id) {
+      Promise.resolve(flagsmith.identify(id)).catch((err) => {
+        if (import.meta.env.DEV) {
+          console.warn('[Flagsmith] Identify failed, continuing safely:', err);
+        }
+      });
+    }
+    return id;
+  }, [ensureLocalIdentity, flagsmith]);
 
   const updateSession = useCallback((updates) => {
     setSession((prev) => {
@@ -43,25 +68,34 @@ export function SessionProvider({ children }) {
     setJSON(STORAGE_KEYS.SESSION_STATE, fresh, 'sessionStorage');
   }, []);
 
-  const switchVariantForPreview = useCallback((variant) => {
-    setPhase1Variant(variant);
+  const setExperimentAssignment = useCallback((variant, enrolled) => {
     setExperimentVariant(variant);
+    setIsEnrolledInExperiment(Boolean(enrolled));
   }, []);
+
+  const trackEvent = useCallback(
+    (eventName) => {
+      return trackAnalyticsEvent(eventName, {
+        anonymousUserId,
+        isEnrolledInExperiment,
+      });
+    },
+    [anonymousUserId, isEnrolledInExperiment]
+  );
 
   const saveLocalFeedback = useCallback(
     (responseId, note) => {
-      const entry = {
+      appendSessionToMemory({
         id: Date.now(),
         anonymousUserId,
+        taskText: session.taskText,
         taskCategory: session.taskCategory,
         selectedMicroStep: session.selectedMicroStep || null,
-        experimentVariant,
+        timeSpentSeconds: session.timeSpentSeconds || FOCUS_DURATION_SECONDS,
+        experimentVariant: isEnrolledInExperiment ? experimentVariant : 'fallback',
         responseId,
         note: note.trim(),
-        createdAt: new Date().toISOString(),
-      };
-      const existing = getJSON(STORAGE_KEYS.FEEDBACK_LOG, [], 'localStorage');
-      setJSON(STORAGE_KEYS.FEEDBACK_LOG, [...existing, entry], 'localStorage');
+      });
 
       updateSession({
         feedbackResponse: responseId,
@@ -69,7 +103,16 @@ export function SessionProvider({ children }) {
         feedbackSubmitted: true,
       });
     },
-    [anonymousUserId, session.taskCategory, session.selectedMicroStep, experimentVariant, updateSession]
+    [
+      anonymousUserId,
+      session.taskText,
+      session.taskCategory,
+      session.selectedMicroStep,
+      session.timeSpentSeconds,
+      experimentVariant,
+      isEnrolledInExperiment,
+      updateSession,
+    ]
   );
 
   return (
@@ -78,12 +121,13 @@ export function SessionProvider({ children }) {
         anonymousUserId,
         ensureIdentity,
         experimentVariant,
-        switchVariantForPreview,
+        isEnrolledInExperiment,
+        setExperimentAssignment,
         session,
         updateSession,
         resetForNewTask,
         saveLocalFeedback,
-        trackEvent: trackPhase1Event,
+        trackEvent,
       }}
     >
       {children}

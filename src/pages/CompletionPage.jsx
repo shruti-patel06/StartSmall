@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSession } from '../context/SessionContext';
 import { FEEDBACK_OPTIONS } from '../constants/categories';
+import { getSessionStats } from '../services/memoryService';
 import { Layout } from '../components/Layout';
 import { Button } from '../components/Button';
 import { FlagIcon, StarIcon } from '../components/QuestIcons';
@@ -26,6 +27,7 @@ export function CompletionPage() {
     'Session recorded';
 
   const mins = Math.max(1, Math.round((session.timeSpentSeconds || 300) / 60));
+  const { total, completed, streak } = getSessionStats();
 
   const handleAnother = () => {
     resetForNewTask();
@@ -43,7 +45,7 @@ export function CompletionPage() {
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-white border-2 border-navy rounded-3xl p-6 sm:p-8 shadow-[0_6px_0_#2D3436] space-y-6 text-center"
+        className="bg-white border-2 border-navy rounded-3xl p-5 xs:p-6 sm:p-8 shadow-[0_6px_0_#2D3436] space-y-6 text-center"
       >
         <div className="flex justify-center">
           <motion.div
@@ -63,6 +65,21 @@ export function CompletionPage() {
           <p className="text-sm sm:text-base text-navy-light">
             Starting is the hardest part, and you just cleared it.
           </p>
+          {total > 0 && (
+            <div className="pt-1 flex justify-center">
+              <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider bg-gold-light border-2 border-navy text-navy px-3.5 py-1 rounded-full">
+                <span>Session {total}</span>
+                <span aria-hidden="true">·</span>
+                <span>{streak}-day streak</span>
+                {completed > 0 && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{completed} finished</span>
+                  </>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Summary card */}

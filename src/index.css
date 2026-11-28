@@ -9,18 +9,33 @@
     color: #2D3436;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
     margin: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: #FFF8F0;
     overflow-x: hidden;
+    touch-action: manipulation;
   }
 
   *:focus-visible {
     outline: 3px solid #FF6B6B;
     outline-offset: 2px;
+  }
+
+  /* Prevent horizontal overflow on mobile */
+  img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Better text rendering on small screens */
+  @media (max-width: 374px) {
+    html { font-size: 14px; }
   }
 }
 
@@ -39,3 +54,53 @@
 .btn-tactile:active:not(:disabled) {
   transform: translateY(3px);
 }
+
+/* CSS 3D cube helpers for interactive landing hero */
+.perspective-900 {
+  perspective: 900px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Safe-area padding for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Responsive range slider styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #E8DCD0;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FF6B6B;
+  border: 2px solid #2D3436;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FF6B6B;
+  border: 2px solid #2D3436;
+  cursor: pointer;
+}
+
+/* Scrollbar hide for horizontal scroll containers */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

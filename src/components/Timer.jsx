@@ -11,6 +11,7 @@ export function Timer({
   status,
   remainingSeconds,
   progressPercent,
+  ctaLabel = 'Start timer',
   onStart,
   onPause,
   onReset,
@@ -23,7 +24,7 @@ export function Timer({
   return (
     <div className="flex flex-col items-center space-y-6">
       {/* Circular countdown ring */}
-      <div className="relative flex items-center justify-center w-56 h-56 sm:w-64 sm:h-64">
+      <div className="relative flex items-center justify-center w-44 h-44 xs:w-52 xs:h-52 sm:w-64 sm:h-64">
         <svg
           className="w-full h-full -rotate-90"
           viewBox="0 0 220 220"
@@ -55,7 +56,7 @@ export function Timer({
 
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span
-            className="text-5xl sm:text-6xl font-black tracking-tight text-navy tabular-nums"
+            className="text-4xl xs:text-5xl sm:text-6xl font-black tracking-tight text-navy tabular-nums"
             aria-live="off"
           >
             {formatMMSS(remainingSeconds)}
@@ -80,7 +81,7 @@ export function Timer({
       <div className="flex flex-wrap items-center justify-center gap-3">
         {(status === 'idle' || status === 'paused') && (
           <Button variant="primary" size="lg" onClick={onStart}>
-            {status === 'paused' ? 'Resume' : 'Start timer'}
+            {status === 'paused' ? 'Resume' : ctaLabel}
           </Button>
         )}
 
